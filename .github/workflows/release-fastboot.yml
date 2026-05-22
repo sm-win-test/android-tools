@@ -15,7 +15,7 @@ on:
 
 jobs:
   build:
-    name: Build fastboot (Linux x86_64)
+    name: Build fastboot (Linux x86_64 static)
     runs-on: ubuntu-latest
 
     steps:
@@ -36,7 +36,6 @@ jobs:
             libselinux1-dev \
             libpcre2-dev \
             libusb-1.0-0-dev \
-            libfmt-dev \
             libprotobuf-dev \
             protobuf-compiler \
             pkg-config
@@ -49,13 +48,23 @@ jobs:
       - name: Configure (fastboot only)
         run: |
           cmake -B build -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release
+            -DCMAKE_BUILD_TYPE=Release \
+            -DANDROID_TOOLS_USE_BUNDLED_FMT=ON \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DProtobuf_USE_STATIC_LIBS=ON \
+            -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++"
 
       - name: Build fastboot
         run: cmake --build build --target fastboot --parallel
 
       - name: Smoke test
         run: ./build/fastboot --version
+
+      - name: Verify static binary
+        run: |
+          file ./build/fastboot
+          ldd ./build/fastboot 2>&1 | grep -q "Not a valid dynamic program" || \
+          ldd ./build/fastboot 2>&1 | grep -q "statically linked"
 
       - name: Rename binary
         run: cp build/fastboot fastboot-linux-x86_64
