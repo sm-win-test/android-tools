@@ -1,6 +1,6 @@
 # Builds a fastboot binary for Linux x86_64 and aarch64 and attaches them to a GitHub Release.
 
-name: Release fastboot
+name: Release fastboot (Linux)
 
 on:
   pull_request:
